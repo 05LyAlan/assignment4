@@ -2,116 +2,65 @@
 
 // This will be the object that will contain the Vue attributes
 // and be used to initialize it.
-let app = {
-    data() {
-      return {
-        contacts: [],
-      };
-    },
-    methods: {
-      async loadContacts() {
-        try {
-          let response = await fetch(get_contacts_url);
-          if (!response.ok) throw new Error('Failed to fetch contacts');
-          let data = await response.json();
-          this.contacts = data.contacts.map(contact => ({
-            ...contact,
-            editing: false
-          }));
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      
-      async addContact() {
-        try {
-          let response = await fetch(add_contact_url, { method: "POST" });
-          if (!response.ok) throw new Error('Failed to add contact');
-          let data = await response.json();
-          this.contacts.push({ ...data.contact, editing: true });
-          // Automatically scroll to the new contact
-          this.$nextTick(() => {
-            const newContact = this.$refs[`contact-${data.contact.id}`][0];
-            if (newContact) newContact.scrollIntoView({ behavior: 'smooth' });
-          });
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      
-      async saveContact(contact) {
-        if (!contact.editing) return;
-        contact.editing = false;
-        try {
-          let response = await fetch(update_contact_url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(contact)
-          });
-          if (!response.ok) throw new Error('Failed to save contact');
-          let data = await response.json();
-          if (!data.success) throw new Error('Save unsuccessful');
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      
-      enableEditing(contact, field) {
-        contact.editing = true;
-      },
-      
-      async deleteContact(contact) {
-        if (!confirm('Are you sure you want to delete this contact?')) return;
-        try {
-          let response = await fetch(delete_contact_url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: contact.id })
-          });
-          if (!response.ok) throw new Error('Failed to delete contact');
-          let data = await response.json();
-          if (data.success) {
-            this.contacts = this.contacts.filter(c => c.id !== contact.id);
-          } else {
-            throw new Error('Delete unsuccessful');
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      
-      clickFigure(contact) {
-        const fileInput = document.getElementById(`file-input-${contact.id}`);
-        if (fileInput) {
-          fileInput.click();
-        }
-      },
-      
-      async onImageChange(event, contact) {
-        const file = event.target.files[0];
-        if (!file) return;
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          
-          let response = await fetch(upload_image_url, {
-            method: 'POST',
-            body: formData
-          });
-          if (!response.ok) throw new Error('Image upload failed');
-          let data = await response.json();
-          contact.contact_image = data.image_url;
-          
-          await this.saveContact(contact);
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    },
-    async mounted() {
-      await this.loadContacts();
-    }
-  };
-  
-  Vue.createApp(app).mount("#app");
+let app = {};
 
+app.data = {
+    contacts: []
+};
+
+app.methods = {
+    loadContacts() {
+        fetch(get_contacts_url)
+            .then(response => response.json())
+            .then(data => this.contacts = data.contacts);
+    },
+    addContact() {
+        fetch(add_contact_url, {method: "POST"})
+            .then(response => response.json())
+            .then(data => {
+                this.contacts.push({
+                    id: data.id,
+                    contact_name: "",
+                    contact_affiliation: "",
+                    contact_description: "",
+                    contact_image: "https://bulma.io/assets/images/placeholders/96x96.png"
+                });
+            });
+    },
+    deleteContact(contactId) {
+        fetch(delete_contact_url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id: contactId})
+        }).then(() => {
+            this.contacts = this.contacts.filter(contact => contact.id !== contactId);
+        });
+    },
+    enableEditing(contact, field) {
+        contact[field] = true;
+    },
+    saveContact(contact, fieldName) {
+        let fieldValue = contact[fieldName];
+        fetch(update_contact_url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id: contact.id, field: fieldName, value: fieldValue})
+        });
+        contact[`editing${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}`] = false;
+    },
+    openImageDialog(index) {
+        this.$refs.fileInput[index].click();
+    },
+    uploadImage(event, contact) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            contact.contact_image = reader.result;
+            this.saveContact(contact, 'contact_image');
+        };
+        if (file) reader.readAsDataURL(file);
+    }
+};
+
+app.vue = Vue.createApp(app).mount("#app");
+app.loadContacts();

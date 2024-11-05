@@ -20,7 +20,7 @@ db.define_table(
     Field('contact_name'),
     Field('contact_affiliation'),
     Field('contact_description', 'text'),
-    Field('contact_image', 'text'),
+    Field('contact_image', 'text', default="https://bulma.io/assets/images/placeholders/96x96.png"),
 )
 
 db.commit()
