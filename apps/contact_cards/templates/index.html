@@ -11,37 +11,48 @@
   <!-- Put here your Vue.js template -->
   <div class="container">
     <h1 class="title">Contacts</h1>
-    <div><button class="button is-success" id="add_button">Add Contact</button></div>
+    <div><button class="button is-success" id="add_button" @click="addContact">Add Contact</button></div>
     <div class="card contact mt-4">
-      <div class="card-content">
+      <div v-for="contact in contacts" :key="contact.id" class="card-content mt-4">
         <div class="media">
           <div class="media-left">
-            <figure class="photo image is-96x96">
-              <img class="photo" src="https://bulma.io/assets/images/placeholders/96x96.png"/>
-              <input id="file-input" type="file" style="display: none"
-              accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*">
+            <figure class="photo image is-96x96" @click="clickFigure(contact)">
+              <img class="photo" :src="contact.contact_image || 'https://bulma.io/assets/images/placeholders/96x96.png'" />
+              <input type="file" :id="'file-input-' + contact.id" style="display: none" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" @change="onImageChange($event, contact)">
             </figure>
           </div>
           <div class="media-content">
             <p class="title person-name">
               <input type="text" class="input is-4 title" 
                     name="name"
-                    placeholder="Name"
-              />
+                    :readonly="!contact.editing"
+                     :placeholder="contact.contact_name || 'Name'"
+                     v-model="contact.contact_name"
+                     @click="enableEditing(contact, 'name')"
+                     @blur="saveContact(contact)">
             </p>
             <p class="subtitle person-affiliation">
               <input type="text" class="input is-6" 
-                    placeholder="Affiliation"
-                    name="affiliation"
-              />
+                name="affiliation"
+                :readonly="!contact.editing"
+                :placeholder="contact.contact_affiliation || 'Affiliation'"
+                v-model="contact.contact_affiliation"
+                @click="enableEditing(contact, 'affiliation')"
+                @blur="saveContact(contact)">
             </p>
           </div>
-          <div class="media-right"><i class="delete-button has-text-danger fa fa-trash trash"></i></div>
+          <div class="media-right">
+            <i class="delete-button has-text-danger fa fa-trash trash" @click="deleteContact(contact)"></i>
+          </div>
         </div>
           <textarea class="textarea"
                     name="description"
-                    placeholder="Description"
-            ></textarea> 
+                    :readonly="!contact.editing"
+                    :placeholder="contact.contact_description || 'Description'"
+                    v-model="contact.contact_description"
+                    @click="enableEditing(contact, 'description')"
+                    @blur="saveContact(contact)">
+          </textarea> 
         </div>
       </div>
     </div>
@@ -52,8 +63,11 @@
 [[block page_scripts]]
 <!-- Loads the index-specific js for Vue -->
 <script>
-  let get_contacts_url = "[[=XML(get_contacts_url)]]";
-  // Add more URLs if you wish. 
+  let get_contacts_url = "[[=URL('get_contacts')]]";
+  let add_contact_url = "[[=URL('add_contact')]]";
+  let update_contact_url = "[[=URL('update_contact')]]";
+  let delete_contact_url = "[[=URL('delete_contact')]]";
+  let upload_image_url = "[[=URL('upload_image')]]";
 </script>
 
 <script src="js/index.js"></script>
