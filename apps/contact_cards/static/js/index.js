@@ -4,8 +4,10 @@
 // and be used to initialize it.
 let app = {};
 
-app.data = {
-    contacts: []
+app.data = function () {
+    return {
+        contacts: []
+    };
 };
 
 app.methods = {
@@ -62,5 +64,10 @@ app.methods = {
     }
 };
 
-app.vue = Vue.createApp(app).mount("#app");
-app.loadContacts();
+app.vue = Vue.createApp({
+    data: app.data,
+    methods: app.methods,
+    mounted() {
+        this.loadContacts();
+    }
+}).mount("#app");
