@@ -16,7 +16,11 @@ app.methods = {
         .then(response => {
             this.contacts = response.data.contacts.map(contact => ({
                 ...contact,
-                editing: { contact_name: false, contact_affiliation: false, contact_description: false }
+                editing: { 
+                    contact_name: false, 
+                    contact_affiliation: false, 
+                    contact_description: false 
+                }
             }));
         })
         .catch(error => {
@@ -31,7 +35,11 @@ app.methods = {
                 contact_affiliation: "",
                 contact_description: "",
                 contact_image: "https://bulma.io/assets/images/placeholders/96x96.png",
-                editing: { contact_name: false, contact_affiliation: false, contact_description: false }
+                editing: { 
+                    contact_name: false, 
+                    contact_affiliation: false, 
+                    contact_description: false 
+                }
             });
         });
     },

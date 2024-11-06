@@ -22,7 +22,8 @@
           </div>
           <div class="media-content">
             <p class="title person-name">
-              <input type="text" class="input is-4 title" 
+              <input type="text" class="input is-4 title"
+                name="name" 
                 v-model="contact.contact_name" 
                 @focus="editable(contact, 'contact_name')" 
                 @blur="save(contact, 'contact_name')" 
@@ -32,6 +33,7 @@
             </p>
             <p class="subtitle person-affiliation">
               <input type="text" class="input is-6"
+                name="affiliation"
                 v-model="contact.contact_affiliation" 
                 @focus="editable(contact, 'contact_affiliation')" 
                 @blur="save(contact, 'contact_affiliation')" 
@@ -45,6 +47,7 @@
           </div>
         </div>
         <textarea class="textarea" 
+            name="description"
             v-model="contact.contact_description" 
             @focus="editable(contact, 'contact_description')" 
             @blur="save(contact, 'contact_description')" 
