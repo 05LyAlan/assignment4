@@ -44,7 +44,8 @@ def index():
 @action('get_contacts')
 @action.uses(db, auth.user)
 def get_contacts():
-    contacts = db(db.contact_card.user_email == get_user_email()).select().as_list()
+    user_email = get_user_email()
+    contacts = db(db.contact_card.user_email == user_email).select().as_list()
     return dict(contacts=contacts)
 
 @action('add_contact', method='POST')

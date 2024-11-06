@@ -55,7 +55,23 @@ app.methods = {
     },
     save(contact, field) {
         contact.editing[field] = false;
-        axios.post(update_contact_url, { id: contact.id, field: field, value: contact[field] });
+        
+        // Debugging: Check the value being saved
+        console.log(`Saving ${field} for contact ${contact.id} with value: ${contact[field]}`);
+        
+        axios.post(update_contact_url, {
+            id: contact.id,
+            field: field,
+            value: contact[field]  // Send the updated field value to the backend
+        }).then(response => {
+            if (response.data.success) {
+                console.log(`Successfully updated ${field}`);
+            } else {
+                console.error(`Failed to update ${field}`);
+            }
+        }).catch(error => {
+            console.error("Error saving contact:", error);
+        });
     },
     clickFigure(contact_id) {
         this.$refs['fileInput' + contact_id][0].click();
