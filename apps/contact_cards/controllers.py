@@ -37,44 +37,50 @@ def index():
     return dict(
         get_contacts_url=URL('get_contacts'),
         add_contact_url=URL('add_contact'),
-        delete_contact_url=URL('delete_contact'),
         update_contact_url=URL('update_contact'),
+        delete_contact_url=URL('delete_contact')
     )
 
 @action('get_contacts')
 @action.uses(db, auth.user)
 def get_contacts():
-    contacts = db(db.contact_card.user_email == auth.current_user.get("email")).select().as_list()
+    contacts = db(db.contact_card.user_email == get_user_email()).select().as_list()
     return dict(contacts=contacts)
 
 @action('add_contact', method='POST')
 @action.uses(db, auth.user)
 def add_contact():
     contact_id = db.contact_card.insert(
-        user_email=auth.current_user.get("email"),
+        user_email=get_user_email(),
         contact_name="",
         contact_affiliation="",
         contact_description="",
         contact_image="https://bulma.io/assets/images/placeholders/96x96.png"
     )
-    return dict(id=contact_id)
+    return dict(contact_id=contact_id)
 
-@action('delete_contact', method='POST')
-@action.uses(db, auth.user)
-def delete_contact():
-    contact_id = request.json.get('id')
-    contact = db.contact_card[contact_id]
-    if contact and contact.user_email == auth.current_user.get("email"):
-        db(db.contact_card.id == contact_id).delete()
-    return dict(success=True)
-
-@action('update_contact', method='POST')
+@action('update_contact', method="POST")
 @action.uses(db, auth.user)
 def update_contact():
-    contact_id = request.json.get('id')
-    field = request.json.get('field')
-    value = request.json.get('value')
+    contact_id = request.json.get("id")
+    field = request.json.get("field")
+    value = request.json.get("value")
     contact = db.contact_card[contact_id]
-    if contact and contact.user_email == auth.current_user.get("email"):
+    
+    if contact and contact.user_email == get_user_email():
         contact.update_record(**{field: value})
-    return dict(success=True)
+        return dict(success=True)
+    else:
+        return dict(success=False)
+    
+@action('delete_contact', method="POST")
+@action.uses(db, auth.user)
+def delete_contact():
+    contact_id = request.json.get("id")
+    contact = db.contact_card[contact_id]
+    
+    if contact and contact.user_email == get_user_email():
+        db(db.contact_card.id == contact_id).delete()
+        return dict(success=True)
+    else:
+        return dict(success=False)

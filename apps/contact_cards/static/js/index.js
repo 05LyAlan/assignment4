@@ -4,70 +4,71 @@
 // and be used to initialize it.
 let app = {};
 
-app.data = function () {
+app.data = function() {
     return {
-        contacts: []
+        contacts: [],
     };
 };
 
 app.methods = {
     loadContacts() {
-        fetch(get_contacts_url)
-            .then(response => response.json())
-            .then(data => this.contacts = data.contacts);
+        axios.get(get_contacts_url)
+        .then(response => {
+            this.contacts = response.data.contacts.map(contact => ({
+                ...contact,
+                editing: { contact_name: false, contact_affiliation: false, contact_description: false }
+            }));
+        })
+        .catch(error => {
+            console.error("Error loading contacts:", error);
+        });
     },
     addContact() {
-        fetch(add_contact_url, {method: "POST"})
-            .then(response => response.json())
-            .then(data => {
-                this.contacts.push({
-                    id: data.id,
-                    contact_name: "",
-                    contact_affiliation: "",
-                    contact_description: "",
-                    contact_image: "https://bulma.io/assets/images/placeholders/96x96.png"
-                });
+        axios.post(add_contact_url).then(response => {
+            this.contacts.push({
+                id: response.data.contact_id,
+                contact_name: "",
+                contact_affiliation: "",
+                contact_description: "",
+                contact_image: "https://bulma.io/assets/images/placeholders/96x96.png",
+                editing: { contact_name: false, contact_affiliation: false, contact_description: false }
             });
-    },
-    deleteContact(contactId) {
-        fetch(delete_contact_url, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({id: contactId})
-        }).then(() => {
-            this.contacts = this.contacts.filter(contact => contact.id !== contactId);
         });
     },
-    enableEditing(contact, field) {
-        contact[field] = true;
-    },
-    saveContact(contact, fieldName) {
-        let fieldValue = contact[fieldName];
-        fetch(update_contact_url, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({id: contact.id, field: fieldName, value: fieldValue})
+    deleteContact(contact_id) {
+        axios.post(delete_contact_url, { id: contact_id }).then(response => {
+            if (response.data.success) {
+                this.contacts = this.contacts.filter(contact => contact.id !== contact_id);
+            }
         });
-        contact[`editing${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}`] = false;
     },
-    openImageDialog(index) {
-        this.$refs.fileInput[index].click();
+    editable(contact, field) {
+        contact.editing[field] = true;
     },
-    uploadImage(event, contact) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            contact.contact_image = reader.result;
-            this.saveContact(contact, 'contact_image');
+    save(contact, field) {
+        contact.editing[field] = false;
+        axios.post(update_contact_url, { id: contact.id, field: field, value: contact[field] });
+    },
+    clickFigure(contact_id) {
+        this.$refs['fileInput' + contact_id][0].click();
+    },
+    updateImage(contact_id, event) {
+        let file = event.target.files[0];
+        let reader = new FileReader();
+        reader.onload = (e) => {
+            axios.post(update_contact_url, { id: contact_id, field: "contact_image", value: e.target.result }).then(response => {
+                if (response.data.success) {
+                    let contact = this.contacts.find(contact => contact.id === contact_id);
+                    contact.contact_image = e.target.result;
+                }
+            });
         };
-        if (file) reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
     }
 };
 
-app.vue = Vue.createApp({
-    data: app.data,
-    methods: app.methods,
-    mounted() {
-        this.loadContacts();
-    }
-}).mount("#app");
+app.mounted = function() {
+    this.loadContacts();
+};
+
+Vue.createApp(app).mount("#app");

@@ -10,38 +10,48 @@
 <div class="section" id="app" v-cloak>
   <div class="container">
     <h1 class="title">Contacts</h1>
-    <div><button class="button is-success" id="add_button" @click="addContact">Add Contact</button></div>
-    <div class="card contact mt-4" v-for="(contact, index) in contacts" :key="contact.id">
+    <button class="button is-success" id="add_button" @click="addContact">Add Contact</button>
+    <div v-for="(contact, index) in contacts" :key="contact.id" class="card contact mt-4">
       <div class="card-content">
         <div class="media">
           <div class="media-left">
-            <figure class="photo image is-96x96" @click="openImageDialog(index)">
-              <img class="photo" :src="contact.contact_image"/>
-              <input type="file" ref="fileInput" style="display: none" @change="uploadImage($event, contact)">
+            <figure class="photo image is-96x96" @click="clickFigure(contact.id)">
+              <img class="photo" :src="contact.contact_image" />
+              <input type="file" :ref="'fileInput' + contact.id" style="display: none" @change="updateImage(contact.id, $event)" accept="image/*" />
             </figure>
           </div>
           <div class="media-content">
             <p class="title person-name">
-              <input type="text" class="input is-4 title" name="name"
-                     placeholder="Name" v-model="contact.contact_name"
-                     :readonly="!contact.editingName"
-                     @dblclick="enableEditing(contact, 'editingName')"
-                     @blur="saveContact(contact, 'contact_name')"/>
+              <input type="text" class="input is-4 title" 
+                v-model="contact.contact_name" 
+                @focus="editable(contact, 'contact_name')" 
+                @blur="save(contact, 'contact_name')" 
+                :readonly="!contact.editing.contact_name" 
+                placeholder="Name" 
+              />
             </p>
             <p class="subtitle person-affiliation">
-              <input type="text" class="input is-6" name="affiliation" placeholder="Affiliation"
-                     v-model="contact.contact_affiliation"
-                     :readonly="!contact.editingAffiliation"
-                     @dblclick="enableEditing(contact, 'editingAffiliation')"
-                     @blur="saveContact(contact, 'contact_affiliation')"/>
+              <input type="text" class="input is-6"
+                v-model="contact.contact_affiliation" 
+                @focus="editable(contact, 'contact_affiliation')" 
+                @blur="save(contact, 'contact_affiliation')" 
+                :readonly="!contact.editing.contact_affiliation" 
+                placeholder="Affiliation" 
+              />
             </p>
           </div>
-          <div class="media-right"><button class="delete_button" @click="deleteContact(contact.id)">Delete</button></div>
+          <div class="media-right">
+            <i class="delete-button has-text-danger fa fa-trash trash" @click="deleteContact(contact.id)"></i>
+          </div>
         </div>
-        <textarea class="textarea" name="description" placeholder="Description" v-model="contact.contact_description"
-                  :readonly="!contact.editingDescription"
-                  @dblclick="enableEditing(contact, 'editingDescription')"
-                  @blur="saveContact(contact, 'contact_description')"></textarea>
+        <textarea class="textarea" 
+            v-model="contact.contact_description" 
+            @focus="editable(contact, 'contact_description')" 
+            @blur="save(contact, 'contact_description')" 
+            :readonly="!contact.editing.contact_description" 
+            placeholder="Description"
+          >
+        </textarea>
       </div>
     </div>
   </div>
@@ -51,8 +61,8 @@
 <script>
   let get_contacts_url = "[[=XML(get_contacts_url)]]";
   let add_contact_url = "[[=XML(add_contact_url)]]";
-  let delete_contact_url = "[[=XML(delete_contact_url)]]";
   let update_contact_url = "[[=XML(update_contact_url)]]";
+  let delete_contact_url = "[[=XML(delete_contact_url)]]";
 </script>
 <script src="js/index.js"></script>
 [[end]]
