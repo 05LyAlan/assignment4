@@ -34,11 +34,8 @@ class StopGrading(Exception):
 
 class py4web(object):
     
-    def start_server(self, path_to_app, port=8400, debug=False):
-        self.debug = debug
+    def start_server(self, path_to_app, args=None):
         print("Starting the server")
-        self.port = port
-        self.debug = debug
         self.app_name = os.path.basename(path_to_app)
         subprocess.run(
             "rm -rf /tmp/apps && mkdir -p /tmp/apps && echo '' > /tmp/apps/__init__.py",
@@ -56,7 +53,7 @@ class py4web(object):
                 "run",
                 "/tmp/apps",
                 "--port",
-                str(self.port),
+                str(args.port),
                 "--app_names",
                 self.app_name,
             ],
@@ -78,12 +75,10 @@ class py4web(object):
                     raise StopGrading
                 print("- app started!")
                 break
-        if self.debug:
-            self.browser = webdriver.Firefox()
-        else:
+        if not args.debug:
             browser_options = webdriver.ChromeOptions()
             browser_options.add_argument("--headless")
-            self.browser =  webdriver.Chrome(options=browser_options)
+        self.browser =  webdriver.Chrome(options=browser_options)
         
     def __del__(self):
         if self.server:
@@ -94,12 +89,12 @@ class py4web(object):
         self.server.kill()
         self.server = None
         print("- stopping server...DONE")
-        if not self.debug:
+        if not args.debug:
             self.browser.quit()
             print("- browser stopped.")
         
     def goto(self, path):
-        self.browser.get(f"http://127.0.0.1:{self.port}/{self.app_name}/{path}")
+        self.browser.get(f"http://127.0.0.1:{args.port}/{self.app_name}/{path}")
         self.browser.implicitly_wait(SERVER_WAIT)
         
     def refresh(self):
@@ -125,9 +120,9 @@ class py4web(object):
 
 class ProtoAssignment(py4web):
     
-    def __init__(self, app_path, debug=False):
+    def __init__(self, app_path, args=None):
         super().__init__()
-        self.start_server(app_path, debug=debug)
+        self.start_server(app_path, args=args)
         self._comments = []
         self.user1 = self.get_user()
         self.user2 = self.get_user()
@@ -177,8 +172,8 @@ class ProtoAssignment(py4web):
 
 class Assignment(ProtoAssignment):
     
-    def __init__(self, app_path, debug=False):
-        super().__init__(os.path.join(app_path, "apps/contact_cards"), debug=debug)
+    def __init__(self, app_path, args=None):
+        super().__init__(os.path.join(app_path, "apps/contact_cards"), args=args)
         self.item = ""
 
     def get_contacts(self):
@@ -307,7 +302,7 @@ class Assignment(ProtoAssignment):
             figure = c.find_element(By.CSS_SELECTOR, "figure.photo")
             content = c.find_element(By.CSS_SELECTOR, "div.media-content")
             figure.click()
-            inp = figure.find_element(By.CSS_SELECTOR, "input[type='file']")
+            inp = self.browser.find_element(By.CSS_SELECTOR, "input[type='file']")
             img = random.choice(self.test_images)
             inp.send_keys(img)
             content.click() # To lose focus and trigger @change. 
@@ -387,11 +382,13 @@ class Assignment(ProtoAssignment):
         contacts = self.get_contacts()
         assert len(contacts) == 1, "S8-7 User 1 should see one contact."
         return 1, "Deleting contacts works properly."
-        
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--debug', default=False, action='store_true',
-                        help="Debug mode (show browser).")
 
-    tests = Assignment(".", debug=parser.parse_args().debug)
+if __name__ == "__main__":
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("--debug", default=False, action="store_true",
+                           help="Run the grading in debug mode.")
+    argparser.add_argument("--port", default=8800, type=int, 
+                            help="Port to run the server on.")
+    args = argparser.parse_args()
+    tests = Assignment(".", args=args)
     tests.grade()
