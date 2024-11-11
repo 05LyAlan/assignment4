@@ -336,8 +336,8 @@ class Assignment(ProtoAssignment):
         i_name.click()
         self.user_2_name = str(uuid.uuid4())
         i_name.send_keys(self.user_2_name)
-        container = self.browser.find_element(By.CSS_SELECTOR, "div.container")
-        container.click() # To lose focus.
+        footer = self.browser.find_element(By.CSS_SELECTOR, "footer.footer")
+        footer.click() # To lose focus.
         self.refresh()
         time.sleep(SERVER_WAIT)
         contacts = self.get_contacts()
